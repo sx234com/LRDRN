@@ -705,7 +705,7 @@ class CBFuse(nn.Module):
 
 # LFFEM_C2f
 class LFFEM_C2f(nn.Module):
-    """Faster Implementation of CSP Bottleneck with 2 convolutions."""
+    """Faster Implementation of LFFEM_C2f."""
 
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):  # ch_in, ch_out, number, shortcut, groups, expansion  假设c1=256 c2=512
         super().__init__()
