@@ -791,7 +791,7 @@ class FGCA_C2f(nn.Module):
         y = list(out1.chunk(2, 1))
         y.extend(m(y[-1]) for m in self.m)
         out = self.cv2(torch.cat(y, 1))
-        # DCA
+        # FGCA
         out = self.fgca(out)
         return out
 
