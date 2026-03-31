@@ -707,7 +707,7 @@ class CBFuse(nn.Module):
 class LFFEM_C2f(nn.Module):
     """Faster Implementation of LFFEM_C2f."""
 
-    def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):  # ch_in, ch_out, number, shortcut, groups, expansion  假设c1=256 c2=512
+    def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):  # ch_in, ch_out, number, shortcut, groups, expansion  
         super().__init__()
         self.c = int(c2 * e)  # hidden channels
         self.cv1 = LFFEM(c1, 2 * self.c, kernel_size=1, stride=1)
@@ -813,30 +813,26 @@ class FGCAattention(nn.Module):
     def forward(self, input):
         x = self.avg_pool(input)
 
-        # x1 = self.conv1(x.squeeze(-1).transpose(-1, -2)).transpose(-1, -2)  #整体分解  U_gc
         x_squ = x.squeeze(-1)
         x_trans1 = x_squ.transpose(-1, -2)
         x_trans1_conv = self.conv1(x_trans1)
         x_trans1_conv_trans = x_trans1_conv.transpose(-1, -2)
         x1 = x_trans1_conv_trans
 
-        # x2 = self.fc(x).squeeze(-1).transpose(-1, -2)# 整体分解  U_lc
-        x = x.flatten(1) # 通过展平（flatten）输入张量，使其变成 (batch_size, channels) 的形状 如果用FC Liner方法 放开这里
+        x = x.flatten(1)
         x2_fc = self.fc(x)
-        x2_fc_squ = x2_fc.unsqueeze(-1)  #如果用FC Liner方法 这里改为x2_fc_squ = x2_fc.unsqueeze(-1)
+        x2_fc_squ = x2_fc.unsqueeze(-1)  
         x2_fc_squ_trans = x2_fc_squ.transpose(-1, -2)
         x2 = x2_fc_squ_trans
 
-        # out1 = torch.sum(torch.matmul(x1,x2),dim=1).unsqueeze(-1).unsqueeze(-1)#(1,64,1,1)  #完全分解
-        o12_mul = torch.matmul(x1, x2)  # x1和x2矩阵相乘
+        o12_mul = torch.matmul(x1, x2) 
         o12_sum = torch.sum(o12_mul, dim=1)
         o12_sum_squ = o12_sum.unsqueeze(-1)
         o12_sum_squ_2 = o12_sum_squ.unsqueeze(-1)
         out1 = o12_sum_squ_2
-        # 激活一下
+        
         out1 = self.sigmoid(out1)
 
-        #out2 = torch.sum(torch.matmul(x2.transpose(-1, -2),x1.transpose(-1, -2)),dim=1).unsqueeze(-1).unsqueeze(-1)
         # x2_trans = x2.transpose(-1, -2)
         # x1_trans = x1.transpose(-1, -2)
         # x2_x1_trans_mul = torch.matmul(x2_trans, x1_trans)
@@ -848,7 +844,7 @@ class FGCAattention(nn.Module):
         # out2 = self.sigmoid(out2)
         #
         # #out = self.mix(out1, out2)
-        # out = torch.add(out1,out2) #特征融合 硬融合
+        # out = torch.add(out1,out2) 
         #
         # out = self.conv1(out.squeeze(-1).transpose(-1, -2)).transpose(-1, -2).unsqueeze(-1)
         #out = self.sigmoid(out)
@@ -944,20 +940,20 @@ class CSSModule(nn.Module):
         y = self.sigmoid(y)  # bs,1,c
         y = y.permute(0, 2, 1).unsqueeze(-1)  # bs,c,1,1
 
-        # 计算通道的权重
+        
         channel_weights = y.squeeze(-1)  # bs,c,1 -> bs,c
 
-        # 按照通道权重大小排序
+        
         sorted_weights, sorted_indices = torch.sort(channel_weights, dim=1, descending=True)
 
-        # 获取前 30% 权重大于a的通道索引
+        
         num_channels = sorted_indices.size(1)
-        num_select_channels = int(num_channels // self.a)  # 30%的通道数量
+        num_select_channels = int(num_channels // self.a)  
 
-        # 获取前30%的通道索引
+        
         top_k_indices = sorted_indices[:, :num_select_channels]
 
-        # 返回筛选出的通道
+       
         selected_channels = x.gather(1, top_k_indices.unsqueeze(-1).expand(-1, -1, x.size(2), x.size(3)))
 
         return selected_channels,num_select_channels
@@ -1091,7 +1087,7 @@ class FFC(nn.Module):
         if self.ratio_gout != 0:
             out_xg = self.convl2g(x_l) + self.convg2g(x_g)
 
-        out=torch.cat((out_xl, out_xg),dim=1) #拼接融合
+        out=torch.cat((out_xl, out_xg),dim=1) 
 
         return out
 
